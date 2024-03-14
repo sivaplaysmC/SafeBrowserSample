@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/Users/sivar/repos/SafeBrowserSampleII/build",
+  "command": "H:\\VS\\VC\\Tools\\MSVC\\14.38.33130\\bin\\Hostx86\\x86\\cl.exe  /nologo /TP -external:IC:\\Users\\sivar\\repos\\SafeBrowserSampleII\\build\\vcpkg_installed\\x86-windows\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /Zi /Ob0 /Od /RTC1 -MDd /FoCMakeFiles\\SafeBrowserSample.dir\\src\\main.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\sivar\\repos\\SafeBrowserSampleII\\src\\main.cpp",
+  "file": "C:\\Users\\sivar\\repos\\SafeBrowserSampleII\\src\\main.cpp",
+  "output": "CMakeFiles\\SafeBrowserSample.dir\\src\\main.cpp.obj"
+}
+]

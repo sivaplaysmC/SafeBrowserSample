@@ -51,6 +51,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
       SetWindowsHookExA(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
 
   HWND hWnd = CreateFullscreenWindow(hInst);
+  // just try to be sane fr man, this battle is not worth it ._.
   /* HWND hWnd = */
   /* CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
      CW_USEDEFAULT, */
@@ -68,6 +69,9 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
   ShowWindow(hWnd, nCmdShow);
   UpdateWindow(hWnd);
 
+  // largely copied from
+  // https://github.com/MicrosoftEdge/WebView2Samples/tree/main/GettingStartedGuides/Win32_GettingStarted/HelloWebView.cpp,
+  // and edited to suite our needs
   CreateCoreWebView2EnvironmentWithOptions(
       nullptr, nullptr, nullptr,
       Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
@@ -86,7 +90,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
                       }
 
                       // Add a few settings for the webview
-                      // The demo step is redundant since the values are the
                       // default settings
                       wil::com_ptr<ICoreWebView2Settings> settings;
                       webview->get_Settings(&settings);
@@ -96,11 +99,20 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
                       settings->put_AreDevToolsEnabled(FALSE);
                       settings->put_AreDefaultContextMenusEnabled(FALSE);
 
+                      // query the runtime for additional settings
                       settings->QueryInterface(IID_PPV_ARGS(&settings7));
                       if (!settings7)
                         OutputDebugStringA("You are fucked");
                       else {
+                        // builtin error page shows a game, we dont want any
+                        // games in our SAFE BROWSER
                         settings7->put_IsBuiltInErrorPageEnabled(FALSE);
+                        // doesnt seem to disable browser
+                        // accelerator keys like F7 for caret
+                        // browsing, Ctrl-G for search, etc. while
+                        // it is supposed to disable it.
+                        //
+                        // Hats off to Microsoft ._.
                         settings7->put_AreBrowserAcceleratorKeysEnabled(FALSE);
                       }
 
@@ -109,9 +121,9 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
                       GetClientRect(hWnd, &bounds);
                       webviewController->put_Bounds(bounds);
 
-                      // Schedule an async task to navigate to Bing
+                      // Schedule an async task to navigate to college website
                       webview->Navigate(
-                          L"https://www.youtube.com/watch?v=xvFZjo5PgG0");
+                          L"http://rajalakshmiinstitutions.net/moodle/");
                       return S_OK;
                     })
                     .Get());
@@ -125,14 +137,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance,
 
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0)) {
-    if (settings7) {
-      settings7->put_AreBrowserAcceleratorKeysEnabled(FALSE);
-      BOOL flag;
-      settings7->get_AreBrowserAcceleratorKeysEnabled(&flag);
-      if (flag == FALSE)
-        OutputDebugStringA("Got fucked up real quick ._.\n");
-      settings7->put_AreBrowserAcceleratorKeysEnabled(FALSE);
-    }
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
@@ -162,16 +166,19 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     auto AltDown = GetAsyncKeyState(VK_MENU);
     auto CtrlDown = GetAsyncKeyState(VK_CONTROL);
     auto vkCode = pKeyInfo->vkCode;
-    /* AltDown = CtrlDown = 0; */
 
-    // restrict function keys
+    // TODO disable more shortcuts
+
+    // restrict function keys (used to get over the caret browsing shit that
+    // ships with MSEdge Webview2)
     if (vkCode >= VK_F1 && vkCode <= VK_F24)
       return 1;
-#if 0
+#if 0 // give access to windows key in debug mode
     if (GetAsyncKeyState(VK_LWIN))
       return 1;
 #endif
 
+    // disable back, next , and alt-tab
     if (AltDown) {
       switch (vkCode) {
       case VK_TAB:
@@ -180,14 +187,15 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
         return 1;
       }
     }
+    // disable swithcing tabs
     if (CtrlDown) {
       switch (vkCode) {
       case VK_TAB:
-      case VK_LEFT:
-      case VK_RIGHT:
         return 1;
       }
     }
+
+    // why did i write this?
     if (AltDown && CtrlDown) {
       switch (vkCode) {
       case VK_TAB:
@@ -200,6 +208,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   return CallNextHookEx(keyboardHook, nCode, wParam, lParam);
 }
 
+// shamelessly copied from Microsoft blog
 HWND CreateFullscreenWindow(HINSTANCE hinst) {
   HMONITOR hmon = MonitorFromWindow(0, MONITOR_DEFAULTTONEAREST);
   MONITORINFO mi = {sizeof(mi)};

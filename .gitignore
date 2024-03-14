@@ -1,1 +1,7 @@
+# contains all build artifacts
 build
+# related to vscode shit and clangd
+.cache
+
+# just in case someone uses vscode
+.vscode
